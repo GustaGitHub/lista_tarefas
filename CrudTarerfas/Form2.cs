@@ -1,4 +1,5 @@
-﻿using MySql.Data.MySqlClient;
+﻿using CrudTarerfas.Repositorios;
+using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -60,15 +61,11 @@ namespace CrudTarerfas
                 try
                 {
                     connection.Open();
-                    var comando = new MySqlCommand(@$"DELETE FROM TAREFAS
-                                                      WHERE ID_TAREFA = {IdTarefa.Text}", connection);
 
-                    var execucao = await comando.ExecuteNonQueryAsync();
+                    bool operacao = await TarefasRepositorio.DesativarTarefa(conn, IdTarefa.Text) ;
 
-                    if (execucao > 0)
-                        MessageBox.Show("Tarefa concluida, Atualize sua lista de Tarefas");
-                    else
-                        MessageBox.Show("O ID desta tarefa não existe");
+                    if (operacao) MessageBox.Show("Tarefa concluida, Atualize sua lista de Tarefas");
+                    else MessageBox.Show("O ID desta tarefa não existe");
                 }
                 catch (Exception ex)
                 {
