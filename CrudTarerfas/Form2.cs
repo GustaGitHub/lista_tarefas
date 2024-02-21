@@ -1,4 +1,5 @@
-﻿using CrudTarerfas.Repositorios;
+﻿using CrudTarerfas.DTO.Tarefas;
+using CrudTarerfas.Repositorios;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
@@ -20,31 +21,25 @@ namespace CrudTarerfas
 
         private async void CriarTarefa_Click(object sender, EventArgs e)
         {
-            using (var connection = conn)
+            try
             {
-                try
-                {
-                    connection.Open();
-                    var comando = new MySqlCommand(@$"INSERT INTO TAREFAS(TITULO, DESCRICAO, PRAZO, DATA_CRIACAO) 
-                                                    VALUES ('{Titulo.Text}', 
-                                                            '{DescricaoTarefa.Text}', 
-                                                            '{PrazoTarefa.Value.Date.ToString("yyyy-MM-dd HH:mm")}',
-                                                            '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}'
-                                                            )", connection);
+                var insercao = await TarefasRepositorio.CriarTarefa(new NovaTarefaDTO() 
+                { 
+                    descricao = DescricaoTarefa.Text,
+                    prazoTarefa = PrazoTarefa.Value,
+                    titulo = Titulo.Text
+                });
 
-                    var execucao = await comando.ExecuteNonQueryAsync();
-
-                    if (execucao > 0)
-                        MessageBox.Show("Tarefa incluida com sucesso, Atualize sua lista de Tarefas");
-                    else
-                        MessageBox.Show("Não foi possível inserir a nova tarefa");
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message);
-                }
-                finally { connection.Close(); }
+                if (insercao)
+                    MessageBox.Show("Tarefa incluida com sucesso, Atualize sua lista de Tarefas");
+                else
+                    MessageBox.Show("Não foi possível inserir a nova tarefa");
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            
         }
 
         private async void ExcluirBtn_Click(object sender, EventArgs e)
@@ -55,54 +50,40 @@ namespace CrudTarerfas
                 return;
             }
 
-
-            using (var connection = conn)
+            try
             {
-                try
-                {
-                    connection.Open();
+                bool operacao = await TarefasRepositorio.DesativarTarefa(IdTarefa.Text) ;
 
-                    bool operacao = await TarefasRepositorio.DesativarTarefa(conn, IdTarefa.Text) ;
-
-                    if (operacao) MessageBox.Show("Tarefa concluida, Atualize sua lista de Tarefas");
-                    else MessageBox.Show("O ID desta tarefa não existe");
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message);
-                }
-                finally { connection.Close(); }
+                if (operacao) MessageBox.Show("Tarefa concluida, Atualize sua lista de Tarefas");
+                else MessageBox.Show("O ID desta tarefa não existe");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
             }
         }
 
         private async void EditarBtn_Click(object sender, EventArgs e)
         {
-            using (var connection = conn)
+            try
             {
-                try
+                bool execucao = await TarefasRepositorio.AtualizarTarefa(new AtualizarTarefaDTO()
                 {
-                    connection.Open();
-                    var comando = new MySqlCommand(@$"UPDATE TAREFAS 
-                                                    SET TITULO = '{Titulo.Text}', 
-                                                        DESCRICAO = '{DescricaoTarefa.Text}', 
-                                                        PRAZO = '{PrazoTarefa.Value.Date.ToString("yyyy-MM-dd HH:mm")}'
-                                                    WHERE ID_TAREFA = {IdTarefa.Text}        
-                                                   ", connection);
+                    titulo = Titulo.Text,
+                    descricao = DescricaoTarefa.Text,
+                    prazoTarefa = PrazoTarefa.Value,
+                    idTarefa = IdTarefa.Text
+                });
 
-                    var execucao = await comando.ExecuteNonQueryAsync();
-
-                    if (execucao > 0)
-                        MessageBox.Show("Tarefa atualiada com sucesso, Atualize sua lista de Tarefas");
-                    else
-                        MessageBox.Show("o id desta tarefa que você quer atualizar não existe");
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message);
-                }
-                finally { connection.Close(); }
+                if (execucao)
+                    MessageBox.Show("Tarefa atualiada com sucesso, Atualize sua lista de Tarefas");
+                else
+                    MessageBox.Show("o id desta tarefa que você quer atualizar não existe");
             }
-
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
     }
 }
