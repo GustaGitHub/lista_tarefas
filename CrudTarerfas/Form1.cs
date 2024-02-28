@@ -24,6 +24,7 @@ namespace CrudTarerfas
         {
             try 
             {
+                await TarefasRepositorio.ExibirRelatorioTarefas();
                 var tarefas = await TarefasRepositorio.ListarTodasTarefas();
 
                 foreach (DataRow row in tarefas.Rows)

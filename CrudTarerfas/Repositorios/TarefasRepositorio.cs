@@ -137,5 +137,88 @@ namespace CrudTarerfas.Repositorios
 
             }
         }
+        public static async Task ExibirRelatorioTarefas()
+        {
+            using (var conn = new MySqlConnection(connString))
+            {
+                try
+                {
+                    conn.Open();
+                    StringBuilder mensagemRelatorio = new StringBuilder();
+                    DateTime dateTime = DateTime.Now;
+                    string saudacao = string.Empty;
+                    string? numeroTotal = string.Empty;
+                    IList<string?> tarefasVencidas = new List<string?>();
+
+                    #region Total de Tarefas
+
+                    string contagemTotalTarefasSQL = "select count(ID_TAREFA) AS TOTAL from tarefas t where t.ATIVO = true";
+                    MySqlCommand comando = new MySqlCommand(contagemTotalTarefasSQL, conn);
+                    var execucaoComando = await comando.ExecuteReaderAsync();
+                    
+                    var dataTable = new DataTable();
+                    dataTable.Load(execucaoComando);
+
+                    numeroTotal = dataTable.Rows[0]["TOTAL"].ToString();
+
+                    #endregion
+
+                    #region Listar Tarefas Vencidas
+
+                    string TarefasVencidasSQL = @"select 
+	                                                concat(TITULO, ' | ', DATE_FORMAT(PRAZO,'%d/%m/%Y')) TAREFA
+                                                from tarefas
+                                                where PRAZO < sysdate() and ATIVO = TRUE";
+
+                    MySqlCommand comando2 = new MySqlCommand(TarefasVencidasSQL, conn);
+                    var execucaoComando2 = await comando2.ExecuteReaderAsync();
+
+                    var dataTable2 = new DataTable();
+                    dataTable2.Load(execucaoComando2);
+
+                    if(dataTable2.Rows.Count > 0)
+                    {
+                        foreach (DataRow row in dataTable2.Rows)
+                            tarefasVencidas.Add(row["TAREFA"].ToString());
+                    }
+                    
+
+                    #endregion
+
+                    #region Montar texto do Relatório
+                    
+                    if (dateTime.Hour >= 0 && dateTime.Hour <= 11) mensagemRelatorio.AppendLine("Bom Dia");
+                    else if (dateTime.Hour >= 12 && dateTime.Hour <= 17) mensagemRelatorio.AppendLine("Boa Tarde");
+                    else mensagemRelatorio.AppendLine("Boa noite");
+
+                    mensagemRelatorio.AppendLine();
+
+                    mensagemRelatorio.AppendLine("Total de Tarefas Pendentes: " + numeroTotal);
+                    
+
+                    if(tarefasVencidas != null && tarefasVencidas.Count > 0)
+                    {
+                        mensagemRelatorio.AppendLine();
+                       
+                        mensagemRelatorio.AppendLine("Você possui Tarefas Pendentes: ");
+
+                        foreach (string tarefa in tarefasVencidas)
+                            mensagemRelatorio.AppendLine("  - " + tarefa);
+                    }
+
+                    #endregion
+
+                    MessageBox.Show(mensagemRelatorio.ToString(), "Relatório de Tarefas");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+                finally
+                {
+                    conn.Close();
+                }
+            }
+        }
     }
 }
